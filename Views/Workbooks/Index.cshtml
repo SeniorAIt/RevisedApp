@@ -1,0 +1,399 @@
+﻿@model IEnumerable<WorkbookManagement.Models.WorkbookSubmission>
+@using WorkbookManagement.Models
+@{
+    ViewData["Title"] = "Workbooks";
+    bool isSuper = User.IsInRole("SuperAdmin");
+
+    // ----- filters coming from controller -----
+    var currentQ = (string)(ViewBag.FilterQ ?? "");
+    Guid? currentCompanyId = (Guid?)ViewBag.FilterCompanyId;
+    WorkbookType? currentType = (WorkbookType?)ViewBag.FilterType;
+    SubmissionStatus? currentStatus = (SubmissionStatus?)ViewBag.FilterStatus;
+    var companyList = isSuper
+        ? (IEnumerable<Company>)(ViewBag.Companies ?? Enumerable.Empty<Company>())
+        : Enumerable.Empty<Company>();
+
+    // SuperAdmin: pre-group by company
+    List<System.Linq.IGrouping<(System.Guid Id, string Name), WorkbookSubmission>>? companyGroups = null;
+    if (isSuper)
+    {
+        companyGroups = Model
+            .GroupBy(w => (Id: w.CompanyId, Name: w.Company?.Name ?? "Unassigned Company"))
+            .OrderBy(g => g.Key.Name)
+            .ToList();
+    }
+
+    // Badge class helper
+    string StatusBadge(SubmissionStatus s) => s switch
+    {
+        SubmissionStatus.Draft => "badge bg-secondary-subtle text-secondary border",
+        SubmissionStatus.Submitted => "badge bg-warning-subtle text-warning border",
+        SubmissionStatus.Approved => "badge bg-success-subtle text-success border",
+        _ => "badge bg-light text-muted border"
+    };
+
+    // A workbook is "complete" when it's not Draft
+    bool IsComplete(WorkbookSubmission w) => w.Status != SubmissionStatus.Draft;
+
+    // Regular users: pre-group by SubmissionId
+    List<IGrouping<Guid?, WorkbookSubmission>>? userSubmissionGroups = null;
+    if (!isSuper)
+    {
+        userSubmissionGroups = Model
+            .OrderByDescending(x => x.UpdatedAt)
+            .GroupBy(x => x.SubmissionId)
+            .OrderByDescending(g => g.Max(x => x.UpdatedAt))
+            .ToList();
+    }
+}
+
+<h2 class="mb-3">Workbooks</h2>
+
+@if (TempData["ok"] is string msg)
+{
+    <div class="alert alert-success">@msg</div>
+}
+@if (TempData["err"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<!-- Launchers -->
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <form asp-controller="Submissions" asp-action="Start" method="post" class="d-inline">
+        <button class="btn btn-primary btn-sm" type="submit">New Submission</button>
+    </form>
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="Submissions" asp-action="Index">View Submissions</a>
+</div>
+
+@if (isSuper)
+{
+    <!-- SuperAdmin filter/search bar -->
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-5">
+            <label class="form-label">Search (title, user email, company)</label>
+            <input type="text" name="q" class="form-control" value="@currentQ"
+                   placeholder="e.g. 'Kyle', 'Workbook2', or company name" />
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label">Company</label>
+            <select name="companyId" class="form-select">
+                <option value="">All companies</option>
+                @foreach (var c in companyList)
+                {
+                    var isSel = currentCompanyId.HasValue && currentCompanyId.Value == c.Id;
+                    if (isSel)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-6 col-md-2">
+            <label class="form-label">Type</label>
+            <select name="type" class="form-select">
+                <option value="">All</option>
+                @foreach (WorkbookType t in Enum.GetValues(typeof(WorkbookType)))
+                {
+                    var isSel = currentType.HasValue && currentType.Value == t;
+                    if (isSel)
+                    {
+                        <option value="@t" selected>@t</option>
+                    }
+                    else
+                    {
+                        <option value="@t">@t</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-6 col-md-2">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">All</option>
+                @foreach (SubmissionStatus s in Enum.GetValues(typeof(SubmissionStatus)))
+                {
+                    var isSel = currentStatus.HasValue && currentStatus.Value == s;
+                    if (isSel)
+                    {
+                        <option value="@s" selected>@s</option>
+                    }
+                    else
+                    {
+                        <option value="@s">@s</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            <a class="btn btn-outline-secondary btn-sm" asp-action="Index">Clear</a>
+        </div>
+    </form>
+}
+
+
+@if (!isSuper)
+{
+    <!-- Company users: group by Submission -->
+    @if (!(userSubmissionGroups?.Any() ?? false))
+    {
+        <div class="alert alert-primary">No workbooks found.</div>
+    }
+    else
+    {
+        foreach (var g in userSubmissionGroups!)
+        {
+            var latest = g.Max(x => x.UpdatedAt).ToLocalTime();
+            var total = g.Count();
+            var done = g.Count(IsComplete);
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <div>
+                        <strong>Submission:</strong>
+                        @if (g.Key.HasValue)
+                        {
+                            <a class="text-decoration-none" asp-controller="Submissions" asp-action="Details" asp-route-id="@g.Key">
+                                <code>@g.Key.Value.ToString().Substring(0, 8)</code>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No submission</span>
+                        }
+                        <span class="badge bg-primary-subtle text-primary border ms-2">@total total</span>
+                        <span class="badge bg-success-subtle text-success border ms-1">@done/3 complete</span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted">Latest update: @latest.ToString("yyyy/MM/dd HH:mm")</small>
+
+                        @if (g.Key.HasValue)
+                        {
+                            <form asp-controller="Submissions" asp-action="Delete" asp-route-id="@g.Key"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Delete this submission and all its workbooks? Only Draft submissions can be deleted.');">
+                                <button class="btn btn-outline-danger btn-sm" type="submit">Delete submission</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Owner</th>
+                                    <th>Updated</th>
+                                    <th class="text-end" style="width:160px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var w in g.OrderBy(x => x.WorkbookType))
+                                {
+                                    <tr>
+                                        <td>@w.Title</td>
+                                        <td>@w.WorkbookType</td>
+                                        <td><span class="@StatusBadge(w.Status)">@w.Status</span></td>
+                                        <td>@(w.User?.Email ?? w.UserId)</td>
+                                        <td>@w.UpdatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss")</td>
+                                        <td class="text-end" style="width:160px;">
+                                            <a class="btn btn-sm btn-primary" asp-action="Open" asp-route-id="@w.Id">Open</a>
+                                            <form asp-action="Delete" asp-route-id="@w.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Delete this workbook?');">
+                                                <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+else
+{
+    <!-- SuperAdmin: group by company, then by submission inside -->
+    @if (!(companyGroups?.Any() ?? false))
+    {
+        <div class="alert alert-primary">No workbooks found.</div>
+    }
+    else
+    {
+        var accId = "accCompanies";
+        <div class="d-flex justify-content-end gap-2 mb-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnExpandAll">Expand All</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCollapseAll">Collapse All</button>
+        </div>
+
+        <div class="accordion" id="@accId">
+            @for (int i = 0; i < companyGroups!.Count; i++)
+            {
+                var g = companyGroups[i];
+                var headerId = $"heading-{i}";
+                var collapseId = $"collapse-{i}";
+                var count = g.Count();
+                var latest = g.Max(x => x.UpdatedAt).ToLocalTime();
+
+                var drafts = g.Count(x => x.Status == SubmissionStatus.Draft);
+                var submitted = g.Count(x => x.Status == SubmissionStatus.Submitted);
+                var approved = g.Count(x => x.Status == SubmissionStatus.Approved);
+
+                bool expanded = (i == 0);
+                string btnClasses = "accordion-button d-flex justify-content-between align-items-center";
+                if (!expanded) btnClasses += " collapsed";
+                string collapseClasses = "accordion-collapse collapse" + (expanded ? " show" : "");
+
+                <div class="accordion-item mb-2">
+                    <h2 class="accordion-header" id="@headerId">
+                        <button class="@btnClasses"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#@collapseId"
+                                aria-expanded="@(expanded.ToString().ToLower())"
+                                aria-controls="@collapseId">
+                            <div class="me-2">
+                                <strong>@g.Key.Name</strong>
+                                <span class="badge bg-primary-subtle text-primary border ms-2">@count</span>
+                                <span class="badge bg-secondary-subtle text-secondary border ms-1" title="Draft">@drafts D</span>
+                                <span class="badge bg-warning-subtle text-warning border ms-1" title="Submitted">@submitted S</span>
+                                <span class="badge bg-success-subtle text-success border ms-1" title="Approved">@approved A</span>
+                            </div>
+                            <small class="text-muted ms-auto">Latest update: @latest.ToString("yyyy/MM/dd HH:mm")</small>
+                        </button>
+                    </h2>
+                    <div id="@collapseId" class="@collapseClasses" aria-labelledby="@headerId" data-bs-parent="#@accId">
+                        <div class="accordion-body">
+
+                            @{
+                                var bySubmission = g
+                                .GroupBy(x => x.SubmissionId)
+                                .OrderByDescending(grp => grp.Max(x => x.UpdatedAt))
+                                .ToList();
+                            }
+
+                            @foreach (var sgrp in bySubmission)
+                            {
+                                var sLatest = sgrp.Max(x => x.UpdatedAt).ToLocalTime();
+                                var total = sgrp.Count();
+                                var done = sgrp.Count(IsComplete);
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div>
+                                            <strong>Submission:</strong>
+                                            @if (sgrp.Key.HasValue)
+                                            {
+                                                <a class="text-decoration-none" asp-controller="Submissions" asp-action="Details" asp-route-id="@sgrp.Key">
+                                                    <code>@sgrp.Key.Value.ToString().Substring(0, 8)</code>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No submission</span>
+                                            }
+                                            <span class="badge bg-primary-subtle text-primary border ms-2">@total total</span>
+                                            <span class="badge bg-success-subtle text-success border ms-1">@done/3 complete</span>
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">Latest update: @sLatest.ToString("yyyy/MM/dd HH:mm")</small>
+
+                                            @if (sgrp.Key.HasValue)
+                                            {
+                                                <form asp-controller="Submissions" asp-action="Delete" asp-route-id="@sgrp.Key"
+                                                      method="post" class="d-inline"
+                                                      onsubmit="return confirm('Delete this submission and all its workbooks? Only Draft submissions can be deleted.');">
+                                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete submission</button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Type</th>
+                                                    <th>Status</th>
+                                                    <th>Owner</th>
+                                                    <th>Updated</th>
+                                                    <th class="text-end" style="width:160px;">Actions</th>
+                                                </tr>
+                                            </thead>
+                        <tbody>
+                            @foreach (var w in sgrp.OrderBy(x => x.WorkbookType))
+                            {
+                                <tr>
+                                    <td>@w.Title</td>
+                                    <td>@w.WorkbookType</td>
+                                    <td><span class="@StatusBadge(w.Status)">@w.Status</span></td>
+                                    <td>@(w.User?.Email ?? w.UserId)</td>
+                                    <td>@w.UpdatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss")</td>
+                                    <td class="text-end" style="width:160px;">
+                                        <a class="btn btn-sm btn-primary" asp-action="Open" asp-route-id="@w.Id">Open</a>
+                                        <form asp-action="Delete" asp-route-id="@w.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Delete this workbook?');">
+                                            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @section Scripts {
+            <script>
+                (function(){
+                    const acc = document.getElementById('@accId');
+                    const expandAll  = document.getElementById('btnExpandAll');
+                    const collapseAll= document.getElementById('btnCollapseAll');
+
+                    function setAll(open) {
+                        const items = acc.querySelectorAll('.accordion-item');
+                        items.forEach(it => {
+                            const btn = it.querySelector('.accordion-button');
+                            const col = it.querySelector('.accordion-collapse');
+                            const isOpen = col.classList.contains('show');
+                            if (open && !isOpen) {
+                                new bootstrap.Collapse(col, { toggle: true });
+                                btn.classList.remove('collapsed');
+                            } else if (!open && isOpen) {
+                                new bootstrap.Collapse(col, { toggle: true });
+                                btn.classList.add('collapsed');
+                            }
+                        });
+                    }
+
+                    expandAll?.addEventListener('click', () => setAll(true));
+                    collapseAll?.addEventListener('click', () => setAll(false));
+                })();
+            </script>
+        }
+    }
+}

@@ -1,0 +1,155 @@
+﻿@model WorkbookManagement.Models.QaSummary
+@using System.Text.Json
+@{
+    ViewData["Title"] = "QA — Page 3 of 13 (Summary)";
+    var id = (int)ViewBag.Id;
+
+    // Data from controller (as double[] fractions 0..1)
+    string[] catLabels = ViewBag.CatLabels ?? Array.Empty<string>();
+    double[] catComp = ViewBag.CatComp ?? Array.Empty<double>();
+    double[] catNComp = ViewBag.CatNComp ?? Array.Empty<double>();
+
+    string[] gelLabels = ViewBag.GelLabels ?? Array.Empty<string>();
+    double[] gelComp = ViewBag.GelComp ?? Array.Empty<double>();
+    double[] gelNComp = ViewBag.GelNComp ?? Array.Empty<double>();
+}
+
+<style>
+    .box {
+        border: 1px solid #bfbfbf;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background: #fff;
+    }
+
+        .box h6 {
+            margin: 0 0 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+    .leadish {
+        font-size: 1.02rem;
+        line-height: 1.5;
+    }
+
+    .chart-card {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 12px;
+        background: #fff;
+    }
+</style>
+
+<div class="container mt-3">
+    <h5 class="fw-bold text-uppercase">SUMMARY DASHBOARD</h5>
+
+    <div class="box leadish">
+        <p class="mb-2">
+            This dashboard summarises compliance across all sections. Percentages show
+            <strong>compliant vs not compliant</strong> out of <em>applicable</em> criteria
+            (CI in {2,3}). Items marked <em>Not Applicable</em> (CI=1) are excluded from the percentages.
+        </p>
+        <p class="mb-0">
+            Use the GEL breakdown to see which parts (GEL 1.1 …) are driving results.
+        </p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="fw-semibold text-uppercase mb-2">Overall by Category</div>
+                <canvas id="barOverall" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="fw-semibold text-uppercase mb-2">GEL Breakdown</div>
+                <canvas id="barGel" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" asp-action="Step3" asp-route-id="@id" class="mt-3">
+        @Html.AntiForgeryToken()
+
+        <div class="box">
+            <label class="form-label fw-semibold">Notes (optional)</label>
+            <textarea asp-for="HighLevelSummary" class="form-control" rows="3"
+                      placeholder="Add any insights or commentary about the overall QA results..."></textarea>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mb-4">
+            <button class="btn btn-outline-secondary" name="nav" value="prev" type="submit">Previous</button>
+            <button class="btn btn-outline-primary" name="nav" value="save" type="submit">Save Draft</button>
+            <button class="btn btn-primary" name="nav" value="next" type="submit">Next</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            // Injected data (0..1 fractions)
+            const cats      = @Html.Raw(JsonSerializer.Serialize(catLabels));
+            const catComp   = @Html.Raw(JsonSerializer.Serialize(catComp));
+            const catNComp  = @Html.Raw(JsonSerializer.Serialize(catNComp));
+
+            const gelLabels = @Html.Raw(JsonSerializer.Serialize(gelLabels));
+            const gelComp   = @Html.Raw(JsonSerializer.Serialize(gelComp));
+            const gelNComp  = @Html.Raw(JsonSerializer.Serialize(gelNComp));
+
+            // Helper tick to show 0..100%
+            function pctTick(v) { return (v * 100).toFixed(0) + '%'; }
+
+            // Overall categories (stacked horizontal)
+            const ctxOverall = document.getElementById('barOverall');
+            if (ctxOverall) {
+                new Chart(ctxOverall, {
+                    type: 'bar',
+                    data: {
+                        labels: cats.slice().reverse(),
+                        datasets: [
+                            { label: 'Compliant',     data: catComp.slice().reverse(),  stack: 'x', borderWidth: 1 },
+                            { label: 'Not Compliant', data: catNComp.slice().reverse(), stack: 'x', borderWidth: 1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                min: 0, max: 1,
+                                ticks: { callback: pctTick }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // GEL breakdown (stacked vertical)
+            const ctxGel = document.getElementById('barGel');
+            if (ctxGel) {
+                new Chart(ctxGel, {
+                    type: 'bar',
+                    data: {
+                        labels: gelLabels,
+                        datasets: [
+                            { label: 'Compliant',     data: gelComp,  stack: 's', borderWidth: 1 },
+                            { label: 'Not Compliant', data: gelNComp, stack: 's', borderWidth: 1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { stacked: true, min: 0, max: 1, ticks: { callback: pctTick } },
+                            x: { stacked: true }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}

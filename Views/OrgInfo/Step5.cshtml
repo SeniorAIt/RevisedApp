@@ -1,0 +1,588 @@
+﻿@model WorkbookManagement.Models.OrgInfoEmploymentSection
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Org Info — Page 5 of 8";
+    var id = (int)ViewBag.Id;
+    var rows = Model.Positions ?? new List<WorkbookManagement.Models.EmploymentPosition>();
+
+    var positionOptions = new List<SelectListItem> {
+        new("Top Management","Top Management"),
+        new("Senior Management","Senior Management"),
+        new("Professionally Qualified","Professionally Qualified"),
+        new("Skilled Technical","Skilled Technical"),
+        new("Semi-skilled","Semi-skilled"),
+        new("Unskilled","Unskilled"),
+        new("Temporary","Temporary"),
+        new("Foreign Nationals","Foreign Nationals")
+    };
+    var empTypeOptions = new List<SelectListItem> {
+        new("Full-Time","Full-Time"),
+        new("Fixed Term","Fixed Term"),
+        new("Temporary","Temporary")
+    };
+}
+
+@await Html.PartialAsync("_OrgInfoNav")
+
+<style>
+    .box {
+        border: 1px solid #bfbfbf;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background: #fff;
+    }
+
+        .box h6 {
+            margin: 0 0 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+    .tight-table th, .tight-table td {
+        padding: .45rem .6rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .table-wide {
+        min-width: 2200px;
+    }
+
+    .cell {
+        min-width: 90px;
+    }
+
+    .w-sel {
+        min-width: 220px;
+    }
+
+    .dotted {
+        border-style: dotted;
+    }
+
+    .readonly {
+        background: #f8f9fa;
+    }
+
+    .group-head {
+        background: #f6f7f9;
+    }
+
+    .grp-sep {
+        border-left: 2px solid #adb5bd !important;
+    }
+
+    #positionsTable td.grp-sep, #positionsTable th.grp-sep, #summaryTable td.grp-sep, #summaryTable th.grp-sep {
+        border-left-width: 2px;
+        border-left-color: #adb5bd;
+    }
+
+    .totals-head {
+        background: #eaf3ff;
+        font-weight: 700;
+    }
+
+    .total-cell {
+        min-width: 140px;
+    }
+
+    .total-input.readonly {
+        font-weight: 700;
+        background: #fff8e6;
+        border-color: #adb5bd;
+        text-align: center;
+    }
+</style>
+
+<div class="container mt-3">
+    <h3>PART 3: - EMPLOYMENT STATS</h3>
+
+    <form method="post" asp-action="Step5" asp-route-id="@id">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <!-- ===== SUMMARY (auto-calculated) ===== -->
+        <div class="box">
+            <div class="table-responsive">
+                <table class="table table-sm tight-table" id="summaryTable">
+                    <thead>
+                        <tr class="group-head">
+                            <th></th>
+                            <th class="center">AFRICAN</th>
+                            <th class="center grp-sep">COLOURED</th>
+                            <th class="center grp-sep">INDIAN</th>
+                            <th class="center grp-sep">WHITE</th>
+                            <th class="center grp-sep totals-head">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="table-light fw-semibold">
+                            <td>Race Totals</td>
+                            <td><span id="race-african-total">0</span> <small class="text-muted" id="race-african-pct">(0%)</small></td>
+                            <td class="grp-sep"><span id="race-coloured-total">0</span> <small class="text-muted" id="race-coloured-pct">(0%)</small></td>
+                            <td class="grp-sep"><span id="race-indian-total">0</span> <small class="text-muted" id="race-indian-pct">(0%)</small></td>
+                            <td class="grp-sep"><span id="race-white-total">0</span> <small class="text-muted" id="race-white-pct">(0%)</small></td>
+                            <td class="grp-sep"><span id="race-all-total">0</span> <small class="text-muted">(100%)</small></td>
+                        </tr>
+
+                        <tr>
+                            <td class="fw-semibold">Total Male = M</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input asp-for="Summary.TotalMale.African" class="form-control form-control-sm readonly" readonly />
+                                    <small class="text-muted" id="pct-african-m">0%</small>
+                                </div>
+                            </td>
+                            <td class="grp-sep">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input asp-for="Summary.TotalMale.Coloured" class="form-control form-control-sm readonly" readonly />
+                                    <small class="text-muted" id="pct-coloured-m">0%</small>
+                                </div>
+                            </td>
+                            <td class="grp-sep">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input asp-for="Summary.TotalMale.Indian" class="form-control form-control-sm readonly" readonly />
+                                    <small class="text-muted" id="pct-indian-m">0%</small>
+                                </div>
+                            </td>
+                            <td class="grp-sep">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input asp-for="Summary.TotalMale.White" class="form-control form-control-sm readonly" readonly />
+                                    <small class="text-muted" id="pct-white-m">0%</small>
+                                </div>
+                            </td>
+                            <td class="grp-sep">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input asp-for="Summary.TotalMale.Total" class="form-control form-control-sm readonly" readonly />
+                                    <small class="text-muted" id="pct-total-m">0%</small>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="fw-semibold">Male Disabled = M(D)</td>
+                            <td><div class="d-flex align-items-center gap-2"><input asp-for="Summary.MaleDisabled.African" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-african-md">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.MaleDisabled.Coloured" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-coloured-md">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.MaleDisabled.Indian" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-indian-md">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.MaleDisabled.White" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-white-md">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.MaleDisabled.Total" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-total-md">0%</small></div></td>
+                        </tr>
+
+                        <tr>
+                            <td class="fw-semibold">Total Female = F</td>
+                            <td><div class="d-flex align-items-center gap-2"><input asp-for="Summary.TotalFemale.African" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-african-f">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.TotalFemale.Coloured" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-coloured-f">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.TotalFemale.Indian" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-indian-f">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.TotalFemale.White" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-white-f">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.TotalFemale.Total" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-total-f">0%</small></div></td>
+                        </tr>
+
+                        <tr>
+                            <td class="fw-semibold">Female Disabled = F(D)</td>
+                            <td><div class="d-flex align-items-center gap-2"><input asp-for="Summary.FemaleDisabled.African" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-african-fd">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.FemaleDisabled.Coloured" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-coloured-fd">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.FemaleDisabled.Indian" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-indian-fd">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.FemaleDisabled.White" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-white-fd">0%</small></div></td>
+                            <td class="grp-sep"><div class="d-flex align-items-center gap-2"><input asp-for="Summary.FemaleDisabled.Total" class="form-control form-control-sm readonly" readonly /><small class="text-muted" id="pct-total-fd">0%</small></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <small class="text-muted">Counts/percentages update automatically from the table below and are saved with the form.</small>
+        </div>
+
+        <!-- ===== DETAIL TABLE ===== -->
+        <div class="box">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Positions / Functions</h6>
+                <button type="button" id="addRowBtn" class="btn btn-sm btn-outline-secondary">Add Row</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm tight-table table-wide" id="positionsTable">
+                    <thead>
+                        <tr class="group-head">
+                            <th rowspan="2" class="align-middle">POSITION/FUNCTION</th>
+                            <th rowspan="2" class="align-middle grp-sep">EMP TYPE</th>
+
+                            <th colspan="4" class="center grp-sep">AFRICAN</th>
+                            <th colspan="4" class="center grp-sep">COLOURED</th>
+                            <th colspan="4" class="center grp-sep">INDIAN</th>
+                            <th colspan="4" class="center grp-sep">WHITE</th>
+                            <th colspan="4" class="center grp-sep totals-head">TOTALS</th>
+                            <th></th>
+                        </tr>
+                        <tr class="group-head">
+                            <th class="nowrap grp-sep">M</th>
+                            <th class="nowrap">M(D)</th>
+                            <th class="nowrap">F</th>
+                            <th class="nowrap">F(D)</th>
+                            <th class="nowrap grp-sep">M</th>
+                            <th class="nowrap">M(D)</th>
+                            <th class="nowrap">F</th>
+                            <th class="nowrap">F(D)</th>
+                            <th class="nowrap grp-sep">M</th>
+                            <th class="nowrap">M(D)</th>
+                            <th class="nowrap">F</th>
+                            <th class="nowrap">F(D)</th>
+                            <th class="nowrap grp-sep">M</th>
+                            <th class="nowrap">M(D)</th>
+                            <th class="nowrap">F</th>
+                            <th class="nowrap">F(D)</th>
+                            <th class="nowrap grp-sep">M</th>
+                            <th class="nowrap">M(D)</th>
+                            <th class="nowrap">F</th>
+                            <th class="nowrap">F(D)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < rows.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <select asp-for="Positions[@i].PositionFunction" asp-items="positionOptions" class="form-select form-select-sm w-sel">
+                                        <option value="" selected hidden>Select</option>
+                                    </select>
+                                </td>
+                                <td class="grp-sep">
+                                    <select asp-for="Positions[@i].EmpType" asp-items="empTypeOptions" class="form-select form-select-sm w-sel">
+                                        <option value="" selected hidden>Select</option>
+                                    </select>
+                                </td>
+
+                                <td class="grp-sep"><input asp-for="Positions[@i].African.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].African.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].African.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].African.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+                                <td class="grp-sep"><input asp-for="Positions[@i].Coloured.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].Coloured.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].Coloured.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].Coloured.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+                                <td class="grp-sep"><input asp-for="Positions[@i].Indian.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].Indian.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].Indian.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].Indian.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+                                <td class="grp-sep"><input asp-for="Positions[@i].White.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].White.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].White.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+                                <td><input asp-for="Positions[@i].White.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+                                <!-- Per-row computed totals (bigger + bold) -->
+                                <td class="grp-sep total-cell">
+                                    <input asp-for="Positions[@i].Totals.M" type="number" class="form-control form-control-sm total-input readonly" readonly />
+                                </td>
+                                <td class="total-cell">
+                                    <input asp-for="Positions[@i].Totals.MD" type="number" class="form-control form-control-sm total-input readonly" readonly />
+                                </td>
+                                <td class="total-cell">
+                                    <input asp-for="Positions[@i].Totals.F" type="number" class="form-control form-control-sm total-input readonly" readonly />
+                                </td>
+                                <td class="total-cell">
+                                    <input asp-for="Positions[@i].Totals.FD" type="number" class="form-control form-control-sm total-input readonly" readonly />
+                                </td>
+
+                                <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-row">Remove</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mb-5">
+            <button class="btn btn-secondary" name="nav" value="prev" type="submit">Previous</button>
+            <button class="btn btn-primary" name="nav" value="save" type="submit">Save Draft</button>
+            <button class="btn btn-success" name="nav" value="next" type="submit">Next</button>
+        </div>
+    </form>
+</div>
+
+<!-- Template for client-side Add Row -->
+<template id="row-template">
+    <tr>
+        <td>
+            <select name="Positions[__idx__].PositionFunction" class="form-select form-select-sm w-sel">
+                <option value="" selected hidden>Select</option>
+                <option value="Top Management">Top Management</option>
+                <option value="Senior Management">Senior Management</option>
+                <option value="Professionally Qualified">Professionally Qualified</option>
+                <option value="Skilled Technical">Skilled Technical</option>
+                <option value="Semi-skilled">Semi-skilled</option>
+                <option value="Unskilled">Unskilled</option>
+                <option value="Temporary">Temporary</option>
+                <option value="Foreign Nationals">Foreign Nationals</option>
+            </select>
+        </td>
+        <td class="grp-sep">
+            <select name="Positions[__idx__].EmpType" class="form-select form-select-sm w-sel">
+                <option value="" selected hidden>Select</option>
+                <option value="Full-Time">Full-Time</option>
+                <option value="Fixed Term">Fixed Term</option>
+                <option value="Temporary">Temporary</option>
+            </select>
+        </td>
+
+        <td class="grp-sep"><input name="Positions[__idx__].African.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].African.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].African.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].African.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+        <td class="grp-sep"><input name="Positions[__idx__].Coloured.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].Coloured.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].Coloured.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].Coloured.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+        <td class="grp-sep"><input name="Positions[__idx__].Indian.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].Indian.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].Indian.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].Indian.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+        <td class="grp-sep"><input name="Positions[__idx__].White.M" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].White.MD" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].White.F" type="number" class="form-control form-control-sm dotted cell" /></td>
+        <td><input name="Positions[__idx__].White.FD" type="number" class="form-control form-control-sm dotted cell" /></td>
+
+        <!-- Per-row computed totals -->
+        <td class="grp-sep total-cell">
+            <input name="Positions[__idx__].Totals.M" type="number" class="form-control form-control-sm total-input readonly" readonly />
+        </td>
+        <td class="total-cell">
+            <input name="Positions[__idx__].Totals.MD" type="number" class="form-control form-control-sm total-input readonly" readonly />
+        </td>
+        <td class="total-cell">
+            <input name="Positions[__idx__].Totals.F" type="number" class="form-control form-control-sm total-input readonly" readonly />
+        </td>
+        <td class="total-cell">
+            <input name="Positions[__idx__].Totals.FD" type="number" class="form-control form-control-sm total-input readonly" readonly />
+        </td>
+
+        <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-row">Remove</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function(){
+          const body = document.querySelector('#positionsTable tbody');
+          const add  = document.getElementById('addRowBtn');
+          const tpl  = document.querySelector('#row-template').innerHTML;
+
+          // Emit a plain number to avoid TS1109 warnings
+          let nextIndex = @((Model.Positions?.Count ?? 0));
+
+          function toInt(v){ const n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
+
+          // Cap at 100%, show 0% if denominator is 0
+          function pctCap(part, whole){
+            if (whole <= 0) return '0%';
+            const p = Math.min(part, whole);
+            return (p * 100 / whole).toFixed(1) + '%';
+          }
+
+          function sumBy(selector){
+            let s = 0;
+            document.querySelectorAll(selector).forEach(el => { s += toInt(el.value); });
+            return s;
+          }
+
+          function setValByName(name, value){
+            const input = document.querySelector(`input[name="${name}"]`);
+            if (input) input.value = value;
+          }
+
+          function recalcRow(tr){
+            const anyInput = tr.querySelector('input[name^="Positions["], select[name^="Positions["]');
+            if (!anyInput) return;
+            const name = anyInput.getAttribute('name');
+            const match = name.match(/^Positions\[(\d+)\]/);
+            if (!match) return;
+            const idx = match[1];
+
+            const getVal = (path) => {
+              const el = tr.querySelector(`input[name="Positions[${idx}].${path}"]`);
+              return toInt(el ? el.value : 0);
+            };
+            const setVal = (path, value) => {
+              const el = tr.querySelector(`input[name="Positions[${idx}].${path}"]`);
+              if (el) el.value = value;
+            };
+
+            const totalM  = getVal("African.M")  + getVal("Coloured.M")  + getVal("Indian.M")  + getVal("White.M");
+            const totalMD = getVal("African.MD") + getVal("Coloured.MD") + getVal("Indian.MD") + getVal("White.MD");
+            const totalF  = getVal("African.F")  + getVal("Coloured.F")  + getVal("Indian.F")  + getVal("White.F");
+            const totalFD = getVal("African.FD") + getVal("Coloured.FD") + getVal("Indian.FD") + getVal("White.FD");
+
+            setVal("Totals.M",  totalM);
+            setVal("Totals.MD", totalMD);
+            setVal("Totals.F",  totalF);
+            setVal("Totals.FD", totalFD);
+          }
+
+          function recalcSummary(){
+            // Per-race sums by category
+            const AM  = sumBy('input[name$=".African.M"]');
+            const AMD = sumBy('input[name$=".African.MD"]');
+            const AF  = sumBy('input[name$=".African.F"]');
+            const AFD = sumBy('input[name$=".African.FD"]');
+
+            const CM  = sumBy('input[name$=".Coloured.M"]');
+            const CMD = sumBy('input[name$=".Coloured.MD"]');
+            const CF  = sumBy('input[name$=".Coloured.F"]');
+            const CFD = sumBy('input[name$=".Coloured.FD"]');
+
+            const IM  = sumBy('input[name$=".Indian.M"]');
+            const IMD = sumBy('input[name$=".Indian.MD"]');
+            const IF  = sumBy('input[name$=".Indian.F"]');
+            const IFD = sumBy('input[name$=".Indian.FD"]');
+
+            const WM  = sumBy('input[name$=".White.M"]');
+            const WMD = sumBy('input[name$=".White.MD"]');
+            const WF  = sumBy('input[name$=".White.F"]');
+            const WFD = sumBy('input[name$=".White.FD"]');
+
+            // Row totals (across races)
+            const TM  = AM + CM + IM + WM;       // Total Male
+            const TMD = AMD + CMD + IMD + WMD;   // Total Male Disabled
+            const TF  = AF + CF + IF + WF;       // Total Female
+            const TFD = AFD + CFD + IFD + WFD;   // Total Female Disabled
+
+            // Race Totals = (M + M(D) + F + F(D)) per race
+            const RT_A = AM + AMD + AF + AFD;
+            const RT_C = CM + CMD + CF + CFD;
+            const RT_I = IM + IMD + IF + IFD;
+            const RT_W = WM + WMD + WF + WFD;
+            const RT_ALL = RT_A + RT_C + RT_I + RT_W;
+
+            // Push numbers into Summary inputs
+            setValByName('Summary.TotalMale.African',  AM);
+            setValByName('Summary.TotalMale.Coloured', CM);
+            setValByName('Summary.TotalMale.Indian',   IM);
+            setValByName('Summary.TotalMale.White',    WM);
+            setValByName('Summary.TotalMale.Total',    TM);
+
+            setValByName('Summary.MaleDisabled.African',  AMD);
+            setValByName('Summary.MaleDisabled.Coloured', CMD);
+            setValByName('Summary.MaleDisabled.Indian',   IMD);
+            setValByName('Summary.MaleDisabled.White',    WMD);
+            setValByName('Summary.MaleDisabled.Total',    TMD);
+
+            setValByName('Summary.TotalFemale.African',  AF);
+            setValByName('Summary.TotalFemale.Coloured', CF);
+            setValByName('Summary.TotalFemale.Indian',   IF);
+            setValByName('Summary.TotalFemale.White',    WF);
+            setValByName('Summary.TotalFemale.Total',    TF);
+
+            setValByName('Summary.FemaleDisabled.African',  AFD);
+            setValByName('Summary.FemaleDisabled.Coloured', CFD);
+            setValByName('Summary.FemaleDisabled.Indian',   IFD);
+            setValByName('Summary.FemaleDisabled.White',    WFD);
+            setValByName('Summary.FemaleDisabled.Total',    TFD);
+
+            // Race Totals row (numbers + % of RT_ALL)
+            document.getElementById('race-african-total').textContent = RT_A;
+            document.getElementById('race-coloured-total').textContent = RT_C;
+            document.getElementById('race-indian-total').textContent   = RT_I;
+            document.getElementById('race-white-total').textContent    = RT_W;
+            document.getElementById('race-all-total').textContent      = RT_ALL;
+
+            document.getElementById('race-african-pct').textContent = '(' + pctCap(RT_A, RT_ALL) + ')';
+            document.getElementById('race-coloured-pct').textContent = '(' + pctCap(RT_C, RT_ALL) + ')';
+            document.getElementById('race-indian-pct').textContent   = '(' + pctCap(RT_I, RT_ALL) + ')';
+            document.getElementById('race-white-pct').textContent    = '(' + pctCap(RT_W, RT_ALL) + ')';
+
+            // Helper to write a whole row's % based on the row total
+            function writeRowPercents(ids, parts, total, totalId){
+              const [aId,cId,iId,wId] = ids;
+              const [a,c,i,w] = parts;
+              document.getElementById(aId).textContent = pctCap(a, total);
+              document.getElementById(cId).textContent = pctCap(c, total);
+              document.getElementById(iId).textContent = pctCap(i, total);
+              document.getElementById(wId).textContent = pctCap(w, total);
+              // Total column: 100% when total>0, else 0%
+              document.getElementById(totalId).textContent = total > 0 ? '100%' : '0%';
+            }
+
+            // Total Male row: per-race % of TM
+            writeRowPercents(
+              ['pct-african-m','pct-coloured-m','pct-indian-m','pct-white-m'],
+              [AM, CM, IM, WM],
+              TM,
+              'pct-total-m'
+            );
+
+            // Male Disabled row: per-race % of TMD
+            writeRowPercents(
+              ['pct-african-md','pct-coloured-md','pct-indian-md','pct-white-md'],
+              [AMD, CMD, IMD, WMD],
+              TMD,
+              'pct-total-md'
+            );
+
+            // Total Female row: per-race % of TF
+            writeRowPercents(
+              ['pct-african-f','pct-coloured-f','pct-indian-f','pct-white-f'],
+              [AF, CF, IF, WF],
+              TF,
+              'pct-total-f'
+            );
+
+            // Female Disabled row: per-race % of TFD
+            writeRowPercents(
+              ['pct-african-fd','pct-coloured-fd','pct-indian-fd','pct-white-fd'],
+              [AFD, CFD, IFD, WFD],
+              TFD,
+              'pct-total-fd'
+            );
+          }
+
+          function recalcAll(){
+            body.querySelectorAll('tr').forEach(tr => recalcRow(tr));
+            recalcSummary();
+          }
+
+          // initial calc (for persisted rows)
+          recalcAll();
+
+          // Add row
+          add.addEventListener('click', () => {
+            const html = tpl.replaceAll('__idx__', String(nextIndex++));
+            const temp = document.createElement('tbody');
+            temp.innerHTML = html.trim();
+            const tr = temp.firstElementChild;
+            body.appendChild(tr);
+            recalcRow(tr);
+            recalcSummary();
+          });
+
+          // Recalc on input changes (delegate)
+          body.addEventListener('input', (e) => {
+            if (e.target && e.target.classList.contains('cell')) {
+              const tr = e.target.closest('tr');
+              recalcRow(tr);
+              recalcSummary();
+            }
+          });
+
+          // After row removal
+          document.addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('remove-row')) {
+              e.target.closest('tr')?.remove();
+              recalcAll();
+            }
+          });
+        })();
+    </script>
+}

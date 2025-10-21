@@ -1,0 +1,181 @@
+﻿@model WorkbookManagement.Models.TqaGeneral
+@{
+    ViewData["Title"] = "Part 1: General Information";
+    var id = (int)ViewBag.Id;
+
+    // Compliance Overview helpers
+    dynamic overall = ViewBag.CO_Overall;
+    var rows = ViewBag.CO_Rows as IEnumerable<dynamic>;
+    Func<double, string> PctFmt = p => (p * 100.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture).Replace(".", ",") + "%";
+}
+
+<h6 class="text-uppercase fw-bold mb-2">PART 1:- GENERAL INFORMATION</h6>
+
+<form asp-action="Step2" asp-route-id="@id" method="post">
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="border p-3">
+                <div class="row align-items-center mb-2">
+                    <div class="col-4 label-col">TRAINING PROVIDER:</div>
+                    <div class="col"><input asp-for="TrainingProvider" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-4 label-col">PROGRAMME NAME:</div>
+                    <div class="col"><input asp-for="ProgrammeName" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-4 label-col">QUALIFICATION/COURSE TITLE:</div>
+                    <div class="col"><input asp-for="QualificationCourseTitle" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-3 label-col">SAQA ID:</div>
+                    <div class="col-3"><input asp-for="SaqaId" class="form-control line-input" /></div>
+                    <div class="col-3 label-col">QCTO ID:</div>
+                    <div class="col-3"><input asp-for="QctoId" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-3 label-col">NQF LEVEL:</div>
+                    <div class="col-3"><input asp-for="NqfLevel" class="form-control line-input" /></div>
+                    <div class="col-3 label-col">CREDITS:</div>
+                    <div class="col-3"><input asp-for="Credits" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-4 label-col">SITE NAME/LOCATION:</div>
+                    <div class="col"><input asp-for="SiteNameLocation" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-4 label-col">TARGET LEARNER GROUP:</div>
+                    <div class="col"><input asp-for="TargetLearnerGroup" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-5 label-col">SITE REPRESENTATIVE NAME:</div>
+                    <div class="col-7"><input asp-for="SiteRepresentativeName" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-3 label-col">QA ASSESSOR NAME:</div>
+                    <div class="col-5"><input asp-for="QaAssessorName" class="form-control line-input" /></div>
+                    <div class="col-2 label-col">CONTACT NO.:</div>
+                    <div class="col-2"><input asp-for="QaAssessorContactNumber" class="form-control line-input" /></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="border p-3 h-100">
+                <div class="row align-items-center mb-2">
+                    <div class="col-6 label-col">No. OF LEARNERS:</div>
+                    <div class="col-6"><input asp-for="NumberOfLearners" class="form-control line-input text-center" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-6 label-col">START DATE:</div>
+                    <div class="col-6"><input asp-for="StartDate" type="date" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-6 label-col">END DATE:</div>
+                    <div class="col-6"><input asp-for="EndDate" type="date" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-6 label-col">PROVINCE:</div>
+                    <div class="col-6"><input asp-for="Province" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center mb-2">
+                    <div class="col-6 label-col">SITE ASSESSMENT DATE:</div>
+                    <div class="col-6"><input asp-for="SiteAssessmentDate" type="date" class="form-control line-input" /></div>
+                </div>
+
+                <div class="row align-items-center">
+                    <div class="col-6 label-col">CONTACT NUMBER:</div>
+                    <div class="col-6"><input asp-for="SiteRepresentativeContactNumber" class="form-control line-input" /></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Overview -->
+    <div class="border p-3 mt-4">
+        <h6 class="text-uppercase fw-bold mb-2">Compliance Overview</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="text-nowrap">
+                        <th style="width:46%">SECTION</th>
+                        <th class="text-center" style="width:12%">Criteria</th>
+                        <th class="text-center" style="width:12%">Compliant</th>
+                        <th class="text-center" style="width:14%">Not Compliant</th>
+                        <th class="text-center" style="width:16%">Com %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="fw-semibold">
+                        <td>OVERALL COMPLIANCE</td>
+                        <td class="text-center">@overall?.Criteria</td>
+                        <td class="text-center">@overall?.Comp</td>
+                        <td class="text-center">@overall?.NonComp</td>
+                        <td class="text-center">@PctFmt((double)(overall?.Pct ?? 0.0))</td>
+                    </tr>
+                    @if (rows != null)
+                    {
+                        foreach (var r in rows)
+                        {
+                            <tr>
+                                <td>@r.Section</td>
+                                <td class="text-center">@r.Criteria</td>
+                                <td class="text-center">@r.Comp</td>
+                                <td class="text-center">@r.NonComp</td>
+                                <td class="text-center">@PctFmt((double)r.Pct)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="small text-muted mt-2">
+            * Compliance % = Compliant ÷ (Compliant + Not Compliant). CI = 1 (N/A) is excluded from the denominator.
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button name="nav" value="prev" class="btn btn-outline-secondary">Back</button>
+        <button name="nav" value="save" class="btn btn-secondary">Save Draft</button>
+        <button name="nav" value="next" class="btn btn-primary">Next</button>
+    </div>
+</form>
+
+@section Styles {
+    <style>
+        .label-col {
+            font-size: .9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .line-input {
+            border: none;
+            border-bottom: 2px dotted #6c757d;
+            border-radius: 0;
+            background: transparent;
+        }
+
+            .line-input:focus {
+                box-shadow: none;
+                border-bottom-color: #198754;
+                background: transparent;
+            }
+
+        .table td, .table th {
+            vertical-align: middle;
+        }
+    </style>
+}

@@ -1,0 +1,106 @@
+﻿@model IEnumerable<WorkbookManagement.Models.Submission>
+@using WorkbookManagement.Models
+@{
+    ViewData["Title"] = "Submissions";
+    var q = (string)(ViewBag.FilterQ ?? "");
+    SubmissionBundleStatus? st = (SubmissionBundleStatus?)ViewBag.FilterStatus;
+    var statuses = Enum.GetValues(typeof(SubmissionBundleStatus)).Cast<SubmissionBundleStatus>();
+}
+
+<h2 class="mb-3">Submissions</h2>
+
+@if (TempData["ok"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["err"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-5">
+        <label class="form-label">Search</label>
+        <input class="form-control" name="q" value="@q" placeholder="Company or owner email..." />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+            <option value="">(All)</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(st == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <button class="btn btn-primary">Search</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Clear</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No submissions found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                    <th>Workbooks</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.Company?.Name</td>
+                        <td>@s.OwnerUser?.Email</td>
+                        <td>
+                            <span class="badge bg-@(
+                                  s.Status == SubmissionBundleStatus.Submitted ? "info" :
+                                  s.Status == SubmissionBundleStatus.Approved ? "success" :
+                                  s.Status == SubmissionBundleStatus.Rejected ? "danger" :
+                                  s.Status == SubmissionBundleStatus.Completed ? "primary" :
+                                  s.Status == SubmissionBundleStatus.InProgress ? "warning text-dark" : "secondary")">
+                        @s.Status
+                    </span>
+                </td>
+                <td>@(s.Workbooks?.Count ?? 0)</td>
+                <td>@s.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</td>
+                <td>@(s.UpdatedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm") ?? "—")</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@s.Id">View</a>
+
+                            @* Only show decide buttons for Submitted bundles *@
+                    @if (s.Status == SubmissionBundleStatus.Submitted)
+                            {
+                                <form asp-action="Decide" asp-route-id="@s.Id" method="post"
+                                      class="d-inline" onsubmit="return confirm('Approve this submission?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="decision" value="approve" />
+                                    <button class="btn btn-sm btn-success">Approve</button>
+                                </form>
+
+                                <form asp-action="Decide" asp-route-id="@s.Id" method="post"
+                                      class="d-inline" onsubmit="return confirm('Reject this submission?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="decision" value="reject" />
+                                    <button class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

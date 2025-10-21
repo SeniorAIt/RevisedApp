@@ -1,0 +1,547 @@
+﻿@model WorkbookManagement.Models.OrgInfoStudentCurrentSection
+@{
+    ViewData["Title"] = "Org Info — Page 10 of 10";
+    var id = (int)ViewBag.Id;
+
+    var programmeTypeOptions = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> {
+        new("Short Course (Non Credit)","Short Course (Non Credit)"),
+        new("Short Course (Credit Bearing)","Short Course (Credit Bearing)"),
+        new("Skills Programmme","Skills Programmme"),
+        new("General Certificate","General Certificate"),
+        new("General Occupational Certificate","General Occupational Certificate"),
+        new("Elementary Certificate","Elementary Certificate"),
+        new("Elementary Occupational Certificate","Elementary Occupational Certificate"),
+        new("Intermediate Certificate","Intermediate Certificate"),
+        new("Intermediate Occupational Certificate","Intermediate Occupational Certificate"),
+        new("National Certificate","National Certificate"),
+        new("National Occupational Certificate","National Occupational Certificate"),
+        new("Higher Certificate","Higher Certificate"),
+        new("Higher Occupational Certificate","Higher Occupational Certificate"),
+        new("Advanced Occupational Certificate","Advanced Occupational Certificate"),
+        new("Occupational Diploma","Occupational Diploma"),
+        new("Diploma","Diploma"),
+        new("Advanced Certificate","Advanced Certificate"),
+        new("Advanced Occupational Diploma","Advanced Occupational Diploma"),
+        new("Advanced Diploma","Advanced Diploma"),
+        new("Specialised Occupational Diploma","Specialised Occupational Diploma"),
+        new("Bachelor's Degree","Bachelor's Degree"),
+        new("Postgraduate Diploma","Postgraduate Diploma"),
+        new("Bachelor's Honours Degree","Bachelor's Honours Degree"),
+        new("Master's Degree","Master's Degree"),
+        new("Professional Master's Degree","Professional Master's Degree"),
+        new("Doctoral Degree","Doctoral Degree"),
+        new("Professional Doctorate","Professional Doctorate")
+    };
+}
+
+@await Html.PartialAsync("_OrgInfoNav")
+
+<style>
+    .box {
+        border: 1px solid #bfbfbf;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background: #fff;
+    }
+
+        .box h6 {
+            margin: 0 0 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+    .tight-table th, .tight-table td {
+        padding: .32rem .42rem;
+        vertical-align: middle;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .table-wide {
+        min-width: 2500px;
+    }
+
+    .cell {
+        min-width: 165px;
+    }
+
+    .cell-num {
+        min-width: 72px;
+        max-width: 84px;
+    }
+
+    .cell-total {
+        min-width: 135px;
+        max-width: 150px;
+    }
+
+    .cell-count {
+        min-width: 88px;
+        max-width: 102px;
+    }
+
+    .cell-pct {
+        min-width: 88px;
+        max-width: 102px;
+    }
+
+    .cell-var {
+        min-width: 125px;
+        max-width: 145px;
+    }
+
+    /* WIDER checkbox column (Expanded to avoid wrapping into Actions) */
+    .cell-check {
+        min-width: 110px; /* was 60px */
+        max-width: 130px; /* was 70px */
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* Keep Actions compact so it doesn't steal space */
+    .cell-actions {
+        min-width: 90px;
+        max-width: 110px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    th.col-total {
+        min-width: 135px;
+    }
+
+    th.col-var {
+        min-width: 125px;
+    }
+
+    .tight-table td {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .grp-sep {
+        border-left: 1px solid rgba(0,0,0,.08) !important;
+    }
+
+    .mid-sep {
+        border-left: 1px solid rgba(0,0,0,.08) !important;
+    }
+
+    .btn-remove-row {
+        white-space: nowrap;
+    }
+
+    input[type=number].cell-num,
+    input[type=number].cell-count,
+    input[type=number].cell-pct,
+    input[type=number].cell-total,
+    input[type=number].cell-var {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem .75rem;
+        align-items: center;
+        font-size: .875rem;
+        color: #495057;
+    }
+
+        .legend .badge {
+            font-size: .75rem;
+            padding: .25rem .5rem;
+        }
+
+    th.ip-head {
+        background: rgba(108,117,125,.12);
+    }
+
+    th.sc-head {
+        background: rgba(25,135,84,.12);
+    }
+
+    th.pr-head {
+        background: rgba(255,193,7,.18);
+    }
+
+    th.di-head {
+        background: rgba(220,53,69,.12);
+    }
+
+    thead th.ip-head, thead th.sc-head, thead th.pr-head, thead th.di-head {
+        border-top: 1px solid rgba(0,0,0,.05);
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+</style>
+
+<div class="container mt-3">
+    <h3>PART 8: - STUDENT STATS (CURRENT)</h3>
+
+    <form method="post" asp-action="Step10" asp-route-id="@id">
+        <!-- Header: Period -->
+        <div class="box">
+            <div class="row g-2 align-items-end">
+                <div class="col-sm-3">
+                    <label class="form-label">PERIOD: From</label>
+                    <input asp-for="PeriodFrom" type="date" class="form-control form-control-sm" id="PeriodFrom" />
+                </div>
+                <div class="col-sm-3">
+                    <label class="form-label">to</label>
+                    <input asp-for="PeriodTo" type="date" class="form-control form-control-sm" id="PeriodTo" />
+                </div>
+                <div class="col-sm-2">
+                    <label class="form-label">Months</label>
+                    <input asp-for="Months" type="number" min="0" class="form-control form-control-sm" id="Months" readonly />
+                </div>
+                <div class="col-sm-4">
+                    <div class="legend mt-2">
+                        <span class="badge bg-secondary" title="In Process">IP</span><span>In Process</span>
+                        <span class="badge bg-success" title="Successful Completion">SC</span><span>Successful Completion</span>
+                        <span class="badge bg-warning text-dark" title="Pending Re-Submission/Re-Assessment">PR</span><span>Pending Re-Submission/Re-Assessment</span>
+                        <span class="badge bg-danger" title="Drop-offs/Incomplete">DI</span><span>Drop-offs/Incomplete</span>
+                        <span class="badge bg-info text-dark" title="Enrolments − (IP+SC+PR+DI)">VAR</span><span>Enrolments − (IP+SC+PR+DI)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="box">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Enrolments by Programme</h6>
+                <button type="button" id="addRowBtn" class="btn btn-sm btn-outline-secondary">Add Row</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm tight-table table-wide" id="currTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="align-middle">PROGRAMME TYPE</th>
+
+                            <th colspan="4" class="center">AFRICAN</th>
+                            <th colspan="4" class="center grp-sep">COLOURED</th>
+                            <th colspan="4" class="center grp-sep">INDIAN</th>
+                            <th colspan="4" class="center grp-sep">WHITE</th>
+
+                            <th rowspan="2" class="align-middle nowrap grp-sep col-total">TOTAL</th>
+                            <th colspan="2" class="center ip-head">IP</th>
+                            <th colspan="2" class="center sc-head mid-sep">SC</th>
+                            <th colspan="2" class="center pr-head mid-sep">PR</th>
+                            <th colspan="2" class="center di-head mid-sep">DI</th>
+                            <th rowspan="2" class="align-middle nowrap grp-sep col-var">VAR</th>
+
+                            <!-- Completed before Actions -->
+                            <th rowspan="2" class="align-middle center grp-sep cell-check">Completed</th>
+                            <th rowspan="2" class="align-middle nowrap grp-sep cell-actions">Actions</th>
+                        </tr>
+                        <tr>
+                            <th>M</th>
+                            <th>M(D)</th>
+                            <th>F</th>
+                            <th>F(D)</th>
+                            <th class="grp-sep">M</th>
+                            <th>M(D)</th>
+                            <th>F</th>
+                            <th>F(D)</th>
+                            <th class="grp-sep">M</th>
+                            <th>M(D)</th>
+                            <th>F</th>
+                            <th>F(D)</th>
+                            <th class="grp-sep">M</th>
+                            <th>M(D)</th>
+                            <th>F</th>
+                            <th>F(D)</th>
+
+                            <th class="ip-head">Count</th>
+                            <th class="ip-head">%</th>
+                            <th class="sc-head mid-sep">Count</th>
+                            <th class="sc-head">%</th>
+                            <th class="pr-head mid-sep">Count</th>
+                            <th class="pr-head">%</th>
+                            <th class="di-head mid-sep">Count</th>
+                            <th class="di-head">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < (Model.Rows?.Count ?? 0); i++)
+                        {
+                            <tr class="curr-row" data-row-index="@i">
+                                <input type="hidden" name="Rows.Index" value="@i" />
+
+                                <td>
+                                    <select asp-for="Rows[@i].ProgrammeType" asp-items="programmeTypeOptions" class="form-select form-select-sm cell">
+                                        <option value="" selected hidden>Select</option>
+                                    </select>
+                                </td>
+
+                                <!-- AFRICAN -->
+                                <td><input asp-for="Rows[@i].African.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+                                <td><input asp-for="Rows[@i].African.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+                                <td><input asp-for="Rows[@i].African.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+                                <td><input asp-for="Rows[@i].African.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+                                <!-- COLOURED -->
+                                <td class="grp-sep"><input asp-for="Rows[@i].Coloured.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+                                <td><input class="form-control form-control-sm      cell-num" asp-for="Rows[@i].Coloured.MD" type="number" /></td>
+                                <td><input class="form-control form-control-sm fval cell-num" asp-for="Rows[@i].Coloured.F" type="number" /></td>
+                                <td><input class="form-control form-control-sm      cell-num" asp-for="Rows[@i].Coloured.FD" type="number" /></td>
+
+                                <!-- INDIAN -->
+                                <td class="grp-sep"><input asp-for="Rows[@i].Indian.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+                                <td><input asp-for="Rows[@i].Indian.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+                                <td><input asp-for="Rows[@i].Indian.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+                                <td><input asp-for="Rows[@i].Indian.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+                                <!-- WHITE -->
+                                <td class="grp-sep"><input asp-for="Rows[@i].White.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+                                <td><input asp-for="Rows[@i].White.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+                                <td><input asp-for="Rows[@i].White.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+                                <td><input asp-for="Rows[@i].White.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+                                <!-- TOTAL + OUTCOMES -->
+                                <td class="grp-sep"><input asp-for="Rows[@i].Total" type="number" class="form-control form-control-sm total cell-total" readonly /></td>
+
+                                <!-- IP -->
+                                <td><input asp-for="Rows[@i].IP" type="number" class="form-control form-control-sm out ip  cell-count" /></td>
+                                <td><input asp-for="Rows[@i].IPPercent" type="number" step="0.01" class="form-control form-control-sm ipp cell-pct" readonly /></td>
+
+                                <!-- SC -->
+                                <td class="mid-sep"><input asp-for="Rows[@i].SC" type="number" class="form-control form-control-sm out sc  cell-count" /></td>
+                                <td><input asp-for="Rows[@i].SCPercent" type="number" step="0.01" class="form-control form-control-sm scp cell-pct" readonly /></td>
+
+                                <!-- PR -->
+                                <td class="mid-sep"><input asp-for="Rows[@i].PR" type="number" class="form-control form-control-sm out pr  cell-count" /></td>
+                                <td><input asp-for="Rows[@i].PRPercent" type="number" step="0.01" class="form-control form-control-sm prp cell-pct" readonly /></td>
+
+                                <!-- DI -->
+                                <td class="mid-sep"><input asp-for="Rows[@i].DI" type="number" class="form-control form-control-sm out di  cell-count" /></td>
+                                <td><input asp-for="Rows[@i].DIPercent" type="number" step="0.01" class="form-control form-control-sm dip cell-pct" readonly /></td>
+
+                                <td class="grp-sep"><input asp-for="Rows[@i].VAR" type="number" class="form-control form-control-sm var cell-var" readonly /></td>
+
+                                <!-- Completed (wider) -->
+                                <td class="grp-sep center cell-check">
+                                    <input asp-for="Rows[@i].Completed" type="checkbox" class="form-check-input" />
+                                </td>
+
+                                <td class="grp-sep cell-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">Remove</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mb-5">
+            <button class="btn btn-secondary" name="nav" value="prev" type="submit">Previous</button>
+            <button class="btn btn-primary" name="nav" value="save" type="submit">Save Draft</button>
+            <button class="btn btn-success" name="nav" value="next" type="submit">Finish</button>
+        </div>
+    </form>
+</div>
+
+<!-- Row template -->
+<template id="row-template">
+    <tr class="curr-row" data-row-index="__idx__">
+        <input type="hidden" name="Rows.Index" value="__idx__" />
+
+        <td>
+            <select name="Rows[__idx__].ProgrammeType" class="form-select form-select-sm cell">
+                <option value="" selected hidden>Select</option>
+                <option>Short Course (Non Credit)</option>
+                <option>Short Course (Credit Bearing)</option>
+                <option>Skills Programmme</option>
+                <option>General Certificate</option>
+                <option>General Occupational Certificate</option>
+                <option>Elementary Certificate</option>
+                <option>Elementary Occupational Certificate</option>
+                <option>Intermediate Certificate</option>
+                <option>Intermediate Occupational Certificate</option>
+                <option>National Certificate</option>
+                <option>National Occupational Certificate</option>
+                <option>Higher Certificate</option>
+                <option>Higher Occupational Certificate</option>
+                <option>Advanced Occupational Certificate</option>
+                <option>Occupational Diploma</option>
+                <option>Diploma</option>
+                <option>Advanced Certificate</option>
+                <option>Advanced Occupational Diploma</option>
+                <option>Advanced Diploma</option>
+                <option>Specialised Occupational Diploma</option>
+                <option>Bachelor's Degree</option>
+                <option>Postgraduate Diploma</option>
+                <option>Bachelor's Honours Degree</option>
+                <option>Master's Degree</option>
+                <option>Professional Master's Degree</option>
+                <option>Doctoral Degree</option>
+                <option>Professional Doctorate</option>
+            </select>
+        </td>
+
+        <!-- AFRICAN -->
+        <td><input name="Rows[__idx__].African.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+        <td><input name="Rows[__idx__].African.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+        <td><input name="Rows[__idx__].African.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+        <td><input name="Rows[__idx__].African.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+        <!-- COLOURED -->
+        <td class="grp-sep"><input name="Rows[__idx__].Coloured.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+        <td><input name="Rows[__idx__].Coloured.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+        <td><input name="Rows[__idx__].Coloured.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+        <td><input name="Rows[__idx__].Coloured.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+        <!-- INDIAN -->
+        <td class="grp-sep"><input name="Rows[__idx__].Indian.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+        <td><input name="Rows[__idx__].Indian.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+        <td><input name="Rows[__idx__].Indian.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+        <td><input name="Rows[__idx__].Indian.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+        <!-- WHITE -->
+        <td class="grp-sep"><input name="Rows[__idx__].White.M" type="number" class="form-control form-control-sm mval cell-num" /></td>
+        <td><input name="Rows[__idx__].White.MD" type="number" class="form-control form-control-sm      cell-num" /></td>
+        <td><input name="Rows[__idx__].White.F" type="number" class="form-control form-control-sm fval cell-num" /></td>
+        <td><input name="Rows[__idx__].White.FD" type="number" class="form-control form-control-sm      cell-num" /></td>
+
+        <td class="grp-sep"><input name="Rows[__idx__].Total" type="number" class="form-control form-control-sm total cell-total" readonly /></td>
+
+        <!-- IP -->
+        <td><input name="Rows[__idx__].IP" type="number" class="form-control form-control-sm out ip  cell-count" /></td>
+        <td><input name="Rows[__idx__].IPPercent" type="number" step="0.01" class="form-control form-control-sm ipp cell-pct" readonly /></td>
+
+        <!-- SC -->
+        <td class="mid-sep"><input name="Rows[__idx__].SC" type="number" class="form-control form-control-sm out sc  cell-count" /></td>
+        <td><input name="Rows[__idx__].SCPercent" type="number" step="0.01" class="form-control form-control-sm scp cell-pct" readonly /></td>
+
+        <!-- PR -->
+        <td class="mid-sep"><input name="Rows[__idx__].PR" type="number" class="form-control form-control-sm out pr  cell-count" /></td>
+        <td><input name="Rows[__idx__].PRPercent" type="number" step="0.01" class="form-control form-control-sm prp cell-pct" readonly /></td>
+
+        <!-- DI -->
+        <td class="mid-sep"><input name="Rows[__idx__].DI" type="number" class="form-control form-control-sm out di  cell-count" /></td>
+        <td><input name="Rows[__idx__].DIPercent" type="number" step="0.01" class="form-control form-control-sm dip cell-pct" readonly /></td>
+
+        <td class="grp-sep"><input name="Rows[__idx__].VAR" type="number" class="form-control form-control-sm var cell-var" readonly /></td>
+
+        <!-- Completed (wider) -->
+        <td class="grp-sep center cell-check">
+            <input name="Rows[__idx__].Completed" type="checkbox" class="form-check-input" />
+        </td>
+
+        <td class="grp-sep cell-actions">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">Remove</button>
+        </td>
+    </tr>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function(){
+          // ===== Period: auto-calc Months (inclusive) =====
+          const fromEl = document.getElementById('PeriodFrom');
+          const toEl   = document.getElementById('PeriodTo');
+          const monEl  = document.getElementById('Months');
+
+          function parseDate(input) {
+              if (!input) return null;
+              const d = new Date(input + 'T00:00:00');
+              return isNaN(d.getTime()) ? null : d;
+          }
+          function inclusiveMonths(d1, d2) {
+              if (!d1 || !d2 || d2 < d1) return '';
+              const y = d2.getFullYear() - d1.getFullYear();
+              const m = d2.getMonth() - d1.getMonth();
+              return (y * 12 + m + 1);
+          }
+          function recalcMonths() {
+              const d1 = parseDate(fromEl?.value);
+              const d2 = parseDate(toEl?.value);
+              const months = inclusiveMonths(d1, d2);
+              if (monEl) monEl.value = months === '' ? '' : months;
+          }
+          if (fromEl && toEl && monEl) {
+              fromEl.addEventListener('change', recalcMonths);
+              toEl.addEventListener('change', recalcMonths);
+              recalcMonths();
+          }
+
+          // ===== Grid logic (totals, %s, var) =====
+          const body = document.querySelector('#currTable tbody');
+          const tpl  = document.getElementById('row-template').innerHTML;
+          const add  = document.getElementById('addRowBtn');
+          let nextIndex = @((Model.Rows?.Count ?? 0));
+
+          function num(v){ const x = parseFloat(v); return isNaN(x) ? 0 : x; }
+
+          function recalcRow(tr){
+            const races = ["African","Coloured","Indian","White"];
+            const parts = ["M","MD","F","FD"];
+            let total = 0;
+
+            for (let ri = 0; ri < races.length; ri++){
+              for (let pi = 0; pi < parts.length; pi++){
+                const el = tr.querySelector("[name*='" + races[ri] + "." + parts[pi] + "']");
+                if (el) total += num(el.value);
+              }
+            }
+
+            const ip = num(tr.querySelector('.ip')?.value || '0');
+            const sc = num(tr.querySelector('.sc')?.value || '0');
+            const pr = num(tr.querySelector('.pr')?.value || '0');
+            const di = num(tr.querySelector('.di')?.value || '0');
+
+            const totalEl = tr.querySelector('.total');
+            const ippEl   = tr.querySelector('.ipp');
+            const scpEl   = tr.querySelector('.scp');
+            const prpEl   = tr.querySelector('.prp');
+            const dipEl   = tr.querySelector('.dip');
+            const varEl   = tr.querySelector('.var');
+
+            if (totalEl) totalEl.value = total || '';
+            if (ippEl)   ippEl.value   = total > 0 ? (ip*100/total).toFixed(2) : '';
+            if (scpEl)   scpEl.value   = total > 0 ? (sc*100/total).toFixed(2) : '';
+            if (prpEl)   prpEl.value   = total > 0 ? (pr*100/total).toFixed(2) : '';
+            if (dipEl)   dipEl.value   = total > 0 ? (di*100/total).toFixed(2) : '';
+            if (varEl)   varEl.value   = total ? (total - (ip + sc + pr + di)) : '';
+          }
+
+          body.addEventListener('input', function(e){
+            const tr = e.target.closest('tr.curr-row');
+            if (tr) recalcRow(tr);
+          });
+
+          add.addEventListener('click', function(){
+            const html = tpl.replaceAll('__idx__', String(nextIndex++));
+            const temp = document.createElement('tbody');
+            temp.innerHTML = html.trim();
+            const tr = temp.firstElementChild;
+            body.appendChild(tr);
+            recalcRow(tr);
+            attachRemoveHandler(tr);
+          });
+
+          function attachRemoveHandler(scope){
+            (scope.querySelectorAll ? scope : document).querySelectorAll('.btn-remove-row').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                const tr = this.closest('tr.curr-row');
+                if (tr) tr.remove();
+              });
+            });
+          }
+
+          body.querySelectorAll('tr.curr-row').forEach(recalcRow);
+          attachRemoveHandler(body);
+        })();
+    </script>
+}
